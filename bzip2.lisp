@@ -480,7 +480,7 @@
              (bzip2-selector1 (state)
                (declare (type bzip2-state state))
                (let ((n-groups (ensure-and-read-bits 3 state)))
-                 (unless (<= 3 n-groups 6)
+                 (unless (<= 2 n-groups 6)
                    (error 'invalid-bzip2-data))
                  (setf (bzip2-state-n-groups state) n-groups)
                  (transition-to bzip2-selector2)))
