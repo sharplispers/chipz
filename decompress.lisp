@@ -68,6 +68,16 @@
   (check-type buffer-size (or null integer))
   (%decompress-from-pathname output state input buffer-size))
 
+;;; Genera's STREAM class is actually a FLAVOR while Gray Streams are CLOS classes.
+;;; Since a CLOS class cannot subclass a FLAVOR, Gray Streams are not subclasses of STREAM
+;;; so we must define methods on both STREAM and GRAY-STREAMS:FUNDAMENTAL-STREAM
+#+(and genera gray-streams)
+(defmethod decompress ((output gray-streams:fundamental-stream) (state decompression-state)
+		       (input pathname)
+		       &key buffer-size)
+  (check-type buffer-size (or null integer))
+  (%decompress-from-pathname output state input buffer-size))
+
 (defun %decompress/null-vector (state input fun
                                 input-start input-end buffer-size)
   (declare (type function fun))
@@ -140,6 +150,17 @@
                            (decompress-fun-for-state state)
                            (or buffer-size +default-buffer-size+)))
 
+;;; NOTE: Genera's STREAM class is actually a FLAVOR while Gray Streams are CLOS classes
+;;;   Since a CLOS class can't subclass a FLAVOR, Gray Streams aren't subclasses of STREAM
+;;;   so we must define methods on both STREAM and GRAY-STREAMS:FUNDAMENTAL-STREAM
+#+(and genera gray-streams)
+(defmethod decompress ((output null) (state decompression-state)
+		       (input gray-streams:fundamental-stream)
+		       &key buffer-size)
+  (%decompress/null-stream state input
+                           (decompress-fun-for-state state)
+                           (or buffer-size +default-buffer-size+)))
+
 (defun %decompress/vector-vector (output state input fun
                                   input-start input-end
                                   output-start output-end)
@@ -191,6 +212,17 @@
                              (decompress-fun-for-state state)
                              input-start (or input-end (length input))))
 
+;;; NOTE: Genera's STREAM class is actually a FLAVOR while Gray Streams are CLOS classes
+;;;   Since a CLOS class can't subclass a FLAVOR, Gray Streams aren't subclasses of STREAM
+;;;   so we must define methods on both STREAM and GRAY-STREAMS:FUNDAMENTAL-STREAM
+#+(and genera gray-streams)
+(defmethod decompress ((output gray-streams:fundamental-stream) (state decompression-state)
+		       (input vector)
+                       &key (input-start 0) input-end)
+  (%decompress/stream-vector output state input
+                             (decompress-fun-for-state state)
+                             input-start (or input-end (length input))))
+
 (defun %decompress/stream-stream (output state input fun)
   (declare (type function fun))
   (let ((input-buffer (make-array 8192 :element-type '(unsigned-byte 8)))
@@ -216,6 +248,30 @@
                 (return-from %decompress/stream-stream output)))))))
 
 (defmethod decompress ((output stream) (state decompression-state) (input stream)
+                       &key)
+  (%decompress/stream-stream output state input
+                             (decompress-fun-for-state state)))
+
+;;; NOTE: Genera's STREAM class is actually a FLAVOR while Gray Streams are CLOS classes
+;;;   Since a CLOS class can't subclass a FLAVOR, Gray Streams aren't subclasses of STREAM
+;;;   so we must define methods on both STREAM and GRAY-STREAMS:FUNDAMENTAL-STREAM
+#+(and genera gray-streams)
+(defmethod decompress ((output stream) (state decompression-state)
+		       (input gray-streams:fundamental-stream)
+                       &key)
+  (%decompress/stream-stream output state input
+                             (decompress-fun-for-state state)))
+
+#+(and genera gray-streams)
+(defmethod decompress ((output gray-streams:fundamental-stream) (state decompression-state)
+		       (input stream)
+                       &key)
+  (%decompress/stream-stream output state input
+                             (decompress-fun-for-state state)))
+
+#+(and genera gray-streams)
+(defmethod decompress ((output gray-streams:fundamental-stream) (state decompression-state)
+		       (input gray-streams:fundamental-stream)
                        &key)
   (%decompress/stream-stream output state input
                              (decompress-fun-for-state state)))
