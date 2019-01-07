@@ -30,7 +30,8 @@
      #+cmu 'ext:fundamental-binary-input-stream
      #+allegro 'excl:fundamental-binary-input-stream
      #+clisp 'gray:fundamental-binary-input-stream
-     #+ecl 'gray:fundamental-binary-input-stream)
+     #+ecl 'gray:fundamental-binary-input-stream
+     #+genera 'gray-streams:fundamental-binary-input-stream)
 
   (defvar *stream-read-byte-function*
      #+lispworks 'stream:stream-read-byte
@@ -39,7 +40,8 @@
      #+cmu 'ext:stream-read-byte
      #+allegro 'excl:stream-read-byte
      #+clisp 'gray:stream-read-byte
-     #+ecl 'gray:stream-read-byte)
+     #+ecl 'gray:stream-read-byte
+     #+genera 'gray-streams:stream-read-byte)
 
   (defvar *stream-read-sequence-function*
      #+lispworks 'stream:stream-read-sequence
@@ -48,7 +50,8 @@
      #+cmu 'ext:stream-read-sequence
      #+allegro 'excl:stream-read-sequence
      #+clisp 'gray:stream-read-byte-sequence
-     #+ecl 'gray:stream-read-sequence)
+     #+ecl 'gray:stream-read-sequence
+     #+genera 'gray-streams:stream-read-sequence)
 ) ; EVAL-WHEN
 
 ;;; READ-SEQUENCE
@@ -62,7 +65,7 @@
                 (let ((end (or end (length seq))))
                   ,@body)))))
 
-    #+(or cmu sbcl allegro ecl)
+    #+(or cmu sbcl allegro ecl genera)
     `(defmethod #.*stream-read-sequence-function* ((stream ,specializer) seq &optional (start 0) end)
        ,definition)
 
