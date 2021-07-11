@@ -368,12 +368,12 @@
                  (unless (and (= (ldb (byte 8 24) header-field) +bz-header-b+)
                               (= (ldb (byte 8 16) header-field) +bz-header-z+)
                               (= (ldb (byte 8 8) header-field) +bz-header-h+))
-                   (error 'invalid-bzip2-magic))
+                   (error 'invalid-bzip2-data))
                  (let ((block-size-magic-byte (ldb (byte 8 0) header-field)))
                    (unless (<= (+ +bz-header-0+ 1)
                                block-size-magic-byte
                                (+ +bz-header-0+ 9))
-                     (error 'invalid-bzip2-magic))
+                     (error 'invalid-bzip2-data))
                    (setf (bzip2-state-100k-block-size state) (- block-size-magic-byte
                                                                 +bz-header-0+))
                    ;; BZIP2 SMALL
