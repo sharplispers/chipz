@@ -93,6 +93,7 @@
                  :reader input-buffer)
    (input-buffer-index :initform 0 :accessor input-buffer-index)
    (input-buffer-n-bytes :initform 0 :accessor input-buffer-n-bytes)
+   (input-stream-eof-p :initform nil :accessor input-stream-eof-p)
    (output-buffer :initform (make-array 4096 :element-type '(unsigned-byte 8))
                   :reader output-buffer)
    (output-buffer-index :initform 0 :accessor output-buffer-index)
@@ -122,14 +123,18 @@
 
 (defun refill-stream-input-buffer (stream)
   (with-slots (input-buffer wrapped-stream
-                            input-buffer-index input-buffer-n-bytes)
+               input-buffer-index input-buffer-n-bytes
+               input-stream-eof-p)
       stream
-    (let ((n-bytes-read (read-sequence input-buffer wrapped-stream)))
-      (setf input-buffer-index 0 input-buffer-n-bytes n-bytes-read)
-      #+nil
-      (format *trace-output* "index: ~D | n-bytes ~D~%"
-              input-buffer-index input-buffer-n-bytes)
-      (values))))
+    (unless input-stream-eof-p
+      (let ((n-bytes-read (read-sequence input-buffer wrapped-stream)))
+        (setf input-buffer-index 0 input-buffer-n-bytes n-bytes-read
+              input-stream-eof-p (< n-bytes-read (length input-buffer)))
+        #+nil
+        (format *trace-output* "index: ~D | n-bytes ~D~%"
+                input-buffer-index input-buffer-n-bytes)
+        )))
+  (values))
 
 (defun refill-stream-output-buffer (stream)
   (unless (input-available-p stream)
