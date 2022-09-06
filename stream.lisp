@@ -93,7 +93,6 @@
                  :reader input-buffer)
    (input-buffer-index :initform 0 :accessor input-buffer-index)
    (input-buffer-n-bytes :initform 0 :accessor input-buffer-n-bytes)
-   (input-stream-eof-p :initform nil :accessor input-stream-eof-p)
    (output-buffer :initform (make-array 4096 :element-type '(unsigned-byte 8))
                   :reader output-buffer)
    (output-buffer-index :initform 0 :accessor output-buffer-index)
@@ -121,15 +120,18 @@
 (defun input-available-p (stream)
   (/= (input-buffer-index stream) (input-buffer-n-bytes stream)))
 
+(defvar *input-stream-eof-p* 'global)
+
 (defun refill-stream-input-buffer (stream)
+  (when (eq *input-stream-eof-p* 'global)
+    (error "Some top level chipz function forgot to bind the chips::*input-stream-eof-p*"))
   (with-slots (input-buffer wrapped-stream
-               input-buffer-index input-buffer-n-bytes
-               input-stream-eof-p)
+               input-buffer-index input-buffer-n-bytes)
       stream
-    (unless input-stream-eof-p
+    (unless *input-stream-eof-p*
       (let ((n-bytes-read (read-sequence input-buffer wrapped-stream)))
         (setf input-buffer-index 0 input-buffer-n-bytes n-bytes-read
-              input-stream-eof-p (< n-bytes-read (length input-buffer)))
+              *input-stream-eof-p* (< n-bytes-read (length input-buffer)))
         #+nil
         (format *trace-output* "index: ~D | n-bytes ~D~%"
                 input-buffer-index input-buffer-n-bytes)
@@ -189,29 +191,31 @@
 (define-stream-read-sequence decompressing-stream
   (unless (typep seq 'simple-octet-vector)
     (return-from #.*stream-read-sequence-function* (call-next-method)))
-  (loop initially (when (output-available-p stream)
-                    (setf start (copy-existing-output stream seq
-                                                      start end)))
-     while (< start end)
-     do (unless (input-available-p stream)
-          (refill-stream-input-buffer stream))
-       ;; If we didn't refill, then we must be all done.
-       (unless (input-available-p stream)
-         (finish-dstate (dstate stream))
-         (loop-finish))
-       ;; Decompress directly into the user-provided buffer.
-       (multiple-value-bind (bytes-read bytes-output)
-           (funcall (the function (dfun stream))
-                    (dstate stream)
-                    (input-buffer stream)
-                    seq
-                    :input-start (input-buffer-index stream)
-                    :input-end (input-buffer-n-bytes stream)
-                    :output-start start
-                    :output-end end)
-         (incf (input-buffer-index stream) bytes-read)
-         (incf start bytes-output))
-     finally (return start)))
+  (let ((*input-stream-eof-p* nil))
+    (loop initially (when (output-available-p stream)
+                      (setf start (copy-existing-output stream seq
+                                                        start end)))
+          while (< start end)
+          do (unless (input-available-p stream)
+               (refill-stream-input-buffer stream))
+             ;; If we didn't refill, then we must be all done.
+             (unless (input-available-p stream)
+               (finish-dstate (dstate stream))
+               (loop-finish))
+             ;; Decompress directly into the user-provided buffer.
+             (multiple-value-bind (bytes-read bytes-output)
+                 (funcall (the function (dfun stream))
+                          (dstate stream)
+                          (input-buffer stream)
+                          seq
+                          :input-start (input-buffer-index stream)
+                          :input-end (input-buffer-n-bytes stream)
+                          :output-start start
+                          :output-end end)
+               (incf (input-buffer-index stream) bytes-read)
+               (incf start bytes-output))
+          finally (return start))))
 
 (defmethod #.*stream-read-byte-function* ((stream decompressing-stream))
-  (read-and-decompress-byte stream))
+  (let ((*input-stream-eof-p* nil))
+    (read-and-decompress-byte stream)))
