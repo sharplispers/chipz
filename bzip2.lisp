@@ -942,7 +942,7 @@
              )
       (unless (bzip2-state-state state)
         (setf (bzip2-state-state state) #'bzip2-header))
-      (funcall (the function (bzip2-state-state state)) state))))
+      (loop (funcall (the function (bzip2-state-state state)) state)))))
 
 (defun %bzip2-decompress (state input output &key (input-start 0) input-end
                           (output-start 0) output-end)
