@@ -123,7 +123,7 @@
   (group-position 0 :type fixnum)
   (lval 0 :type fixnum)
   (nblockMAX 0 :type (integer 0 900000))
-  (nblock 0 :type (integer 0 (900000)))
+  (nblock 0 :type (integer 0 900000))
   (es 0 :type fixnum)
   (N 0 :type fixnum)
   (curr 0 :type (integer 0 20))
@@ -212,7 +212,7 @@
        (declare (type (unsigned-byte 32) calculated-block-crc))
        (declare (type (integer 0 260) out-len))
        (declare (type (unsigned-byte 8) k0 k1))
-       (declare (type (integer 0 900000) n-blocks-used nblockpp))
+       (declare (type (integer 0 900001) n-blocks-used nblockpp))
        (declare (type (unsigned-byte 32) t-position))
        (macrolet ((get-fast ()
                     `(prog2
