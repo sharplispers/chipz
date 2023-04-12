@@ -163,7 +163,8 @@ the input and the number of bytes written to the output."
                       (len 1 (1+ len))
                       (first 0 (probably-the-fixnum (ash first 1)))
                       (code 0 (probably-the-fixnum (ash code 1))))
-                     ((>= len +max-code-length+) nil)
+                     ((>= len +max-code-length+)
+                      (error 'decompression-error :format-control "Invalid Huffman code"))
                    (declare (type (and fixnum (integer 0 *)) first code))
                    ;; We would normally do this with READ-BITS, but DECODE-VALUE
                    ;; is a hotspot in profiles along with this would-be call to
@@ -330,6 +331,10 @@ the input and the number of bytes written to the output."
                    ((< value 256)
                     (setf (inflate-state-length state) value)
                     (transition-to literal))
+                   ((> value 285)
+                    (error 'decompression-error
+                           :format-control "Invalid length code: ~d"
+                           :format-arguments (list value)))
                    ((> value 256)
                     (setf (inflate-state-length-code state) (- value 257))
                     (transition-to length-code))
@@ -359,6 +364,10 @@ the input and the number of bytes written to the output."
                (declare (type inflate-state state))
                (let ((value (decode-value (inflate-state-distance-table state)
                                           state)))
+                 (when (> value 29)
+                   (error 'decompression-error
+                          :format-control "Invalid distance code: ~d"
+                          :format-arguments (list value)))
                  (setf (inflate-state-distance state) value)
                  (transition-to distance-extra)))
 
