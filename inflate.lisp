@@ -196,12 +196,18 @@ the input and the number of bytes written to the output."
                              (let ((len 0) (sym 0))
                                (cond
                                  ((= value 16)
+                                  (when (zerop (inflate-state-n-values-read state))
+                                    (error 'decompression-error
+                                           :format-control "Code lengths start with a repetition"))
                                   (setf sym (aref lengths (1- (inflate-state-n-values-read state))))
                                   (setf len (+ 3 (read-bits 2 state))))
                                  ((= value 17)
                                   (setf len (+ 3 (read-bits 3 state))))
                                  ((= value 18)
                                   (setf len (+ 11 (read-bits 7 state)))))
+                               (when (< n-values (+ (inflate-state-n-values-read state) len))
+                                 (error 'decompression-error
+                                        :format-control "Code lengths continue beyond bounds"))
                                (fill lengths sym :start (inflate-state-n-values-read state)
                                      :end (+ (inflate-state-n-values-read state) len))
                                (incf (inflate-state-n-values-read state) len)))))
