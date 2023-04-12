@@ -245,14 +245,16 @@ the input and the number of bytes written to the output."
 
              (uncompressed-block (state)
                (align-bits-bytewise state)
-               (let* ((len (ensure-and-read-bits 16 state))
-                      (nlen (ensure-and-read-bits 16 state)))
-                 (unless (zerop (logand len nlen))
+               (setf (inflate-state-length state) (ensure-and-read-bits 16 state))
+               (transition-to uncompressed-block-checksum))
+
+             (uncompressed-block-checksum (state)
+               (let ((nlen (ensure-and-read-bits 16 state)))
+                 (unless (zerop (logand (inflate-state-length state) nlen))
                    ;; Apparently Adobe's PDF generator(s) get this wrong, so let the
                    ;; user continue on if they choose to do so.
                    (cerror "Use the invalid stored block length."
                            'invalid-stored-block-length-error))
-                 (setf (inflate-state-length state) len)
                  (transition-to copy-bytes)))
 
              (copy-bytes (state)
