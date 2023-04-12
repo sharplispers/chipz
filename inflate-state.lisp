@@ -20,7 +20,7 @@
   (n-distance-codes 0)
   (n-codes 0)
   (n-values-read 0)
-  (code-lengths (make-array 288) :type (simple-vector 288))
+  (code-lengths (make-array 320) :type (simple-vector 320))
   ;; sliding window
   (window (make-array 32768 :element-type '(unsigned-byte 8))
           :type sliding-window)
