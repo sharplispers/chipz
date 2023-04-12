@@ -58,8 +58,9 @@
 
 ;;; decode table construction
 
-(defun construct-huffman-decode-table (code-lengths &optional n-syms)
+(defun construct-huffman-decode-table (code-lengths &optional n-syms start)
   (let* ((n-syms (or n-syms (length code-lengths)))
+         (start (or start 0))
          (min-code-length +max-code-length+)
          (max-code-length 0)
          (counts (make-array +max-code-length+ :initial-element 0
@@ -69,7 +70,7 @@
          (symbols (make-array n-syms :initial-element 0 :element-type 'fixnum)))
     (declare (type (simple-array (unsigned-byte 16) (*)) counts)
              (type (simple-array fixnum (*)) symbols))
-    (dotimes (i n-syms)
+    (loop for i from start below (+ start n-syms) do
       (let ((c (aref code-lengths i)))
         (setf min-code-length (min min-code-length c))
         (setf max-code-length (max max-code-length c))
@@ -78,7 +79,7 @@
     (loop for i from 1 below +deflate-max-bits+
           do (setf (aref offsets (1+ i)) (+ (aref offsets i) (aref counts i))))
     (dotimes (i n-syms (make-hdt counts offsets symbols max-code-length))
-      (let ((l (aref code-lengths i)))
+      (let ((l (aref code-lengths (+ start i))))
         (unless (zerop l)
           (setf (aref symbols (aref offsets l)) i)
           (incf (aref offsets l)))))))

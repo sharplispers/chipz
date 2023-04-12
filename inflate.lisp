@@ -204,9 +204,7 @@ the input and the number of bytes written to the output."
                                (fill lengths sym :start (inflate-state-n-values-read state)
                                      :end (+ (inflate-state-n-values-read state) len))
                                (incf (inflate-state-n-values-read state) len)))))
-                     finally (progn
-                               (assert (= n-values (inflate-state-n-values-read state)))
-                               (return (construct-huffman-decode-table lengths n-values)))))
+                     finally (assert (= n-values (inflate-state-n-values-read state)))))
 
              ;; Basic starter functions.
              (done (state)
@@ -305,21 +303,20 @@ the input and the number of bytes written to the output."
                      (construct-huffman-decode-table (inflate-state-code-lengths state)
                                                      +max-n-code-lengths+)
                      (inflate-state-n-values-read state) 0)
-               (transition-to dynamic-literal/length-table))
+               (transition-to dynamic-literal/length+distance-tables))
 
-             (dynamic-literal/length-table (state)
+             (dynamic-literal/length+distance-tables (state)
                (declare (type inflate-state state))
+               (read-dynamic-table state (inflate-state-codes-table state)
+                                   (+ (inflate-state-n-length-codes state)
+                                      (inflate-state-n-distance-codes state)))
                (setf (inflate-state-literal/length-table state)
-                     (read-dynamic-table state (inflate-state-codes-table state)
-                                         (inflate-state-n-length-codes state))
-                     (inflate-state-n-values-read state) 0)
-               (transition-to dynamic-distance-table))
-
-             (dynamic-distance-table (state)
-               (declare (type inflate-state state))
+                     (construct-huffman-decode-table (inflate-state-code-lengths state)
+                                                     (inflate-state-n-length-codes state)))
                (setf (inflate-state-distance-table state)
-                     (read-dynamic-table state (inflate-state-codes-table state)
-                                         (inflate-state-n-distance-codes state)))
+                     (construct-huffman-decode-table (inflate-state-code-lengths state)
+                                                     (inflate-state-n-distance-codes state)
+                                                     (inflate-state-n-length-codes state)))
                (transition-to literal/length))
 
 ;;; normal operation on compressed blocks
