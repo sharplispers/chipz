@@ -94,7 +94,7 @@
        '(143 255 279 287)))             ; end values
 
 (defparameter *fixed-block-distance-lengths*
-  (list (make-crd 5 0 29)))
+  (list (make-crd 5 0 31)))
 
 (defun code-n-values (c)
   (1+ (- (code-end-value c) (code-start-value c))))
