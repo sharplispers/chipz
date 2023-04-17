@@ -78,6 +78,41 @@ consistency check."))
   (:documentation "Signaled when a stored block's length does not pass
 the consistency check."))
 
+(define-condition code-lengths-bounds-error (inflate-error)
+  ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "Code lengths expand out of bounds")))
+  (:documentation "Signaled when the code length section of a dynamic block would produce more
+code lengths than declared."))
+
+(define-condition code-lengths-start-with-repetition-error (inflate-error)
+  ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "Code lengths start with a repetition")))
+  (:documentation "Signaled when the code length section of a dynamic block begins with \"repeat
+last code\"."))
+
+(define-condition unassigned-huffman-code-error (inflate-error)
+  ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "Unassigned Huffman code")))
+  (:documentation "Signaled when an unassigned Huffman code is referenced."))
+
+(define-condition illegal-length-code-error (inflate-error)
+  ((code :initarg :code :reader illegal-code))
+  (:report (lambda (condition stream)
+             (format stream "Illegal length code: ~d" (illegal-code condition))))
+  (:documentation "Signaled when the illegal length codes 286 or 287 are used."))
+
+(define-condition illegal-distance-code-error (inflate-error)
+  ((code :initarg :code :reader illegal-code))
+  (:report (lambda (condition stream)
+             (format stream "Illegal distance code: ~d" (illegal-code condition))))
+  (:documentation "Signaled when the illegal distance codes 30 or 31 are used."))
+
 
 ;;; Errors related to bzip2
 
