@@ -164,7 +164,7 @@ the input and the number of bytes written to the output."
                       (first 0 (probably-the-fixnum (ash first 1)))
                       (code 0 (probably-the-fixnum (ash code 1))))
                      ((>= len +max-code-length+)
-                      (error 'decompression-error :format-control "Invalid Huffman code"))
+                      (error 'unassigned-huffman-code-error))
                    (declare (type (and fixnum (integer 0 *)) first code))
                    ;; We would normally do this with READ-BITS, but DECODE-VALUE
                    ;; is a hotspot in profiles along with this would-be call to
@@ -197,8 +197,7 @@ the input and the number of bytes written to the output."
                                (cond
                                  ((= value 16)
                                   (when (zerop (inflate-state-n-values-read state))
-                                    (error 'decompression-error
-                                           :format-control "Code lengths start with a repetition"))
+                                    (error 'code-lengths-start-with-repetition-error))
                                   (setf sym (aref lengths (1- (inflate-state-n-values-read state))))
                                   (setf len (+ 3 (read-bits 2 state))))
                                  ((= value 17)
@@ -206,8 +205,7 @@ the input and the number of bytes written to the output."
                                  ((= value 18)
                                   (setf len (+ 11 (read-bits 7 state)))))
                                (when (< n-values (+ (inflate-state-n-values-read state) len))
-                                 (error 'decompression-error
-                                        :format-control "Code lengths continue beyond bounds"))
+                                 (error 'code-lengths-bounds-error))
                                (fill lengths sym :start (inflate-state-n-values-read state)
                                      :end (+ (inflate-state-n-values-read state) len))
                                (incf (inflate-state-n-values-read state) len)))))
@@ -338,9 +336,7 @@ the input and the number of bytes written to the output."
                     (setf (inflate-state-length state) value)
                     (transition-to literal))
                    ((> value 285)
-                    (error 'decompression-error
-                           :format-control "Invalid length code: ~d"
-                           :format-arguments (list value)))
+                    (error 'illegal-length-code-error :code value))
                    ((> value 256)
                     (setf (inflate-state-length-code state) (- value 257))
                     (transition-to length-code))
@@ -371,9 +367,7 @@ the input and the number of bytes written to the output."
                (let ((value (decode-value (inflate-state-distance-table state)
                                           state)))
                  (when (> value 29)
-                   (error 'decompression-error
-                          :format-control "Invalid distance code: ~d"
-                          :format-arguments (list value)))
+                   (error 'illegal-distance-code-error :code value))
                  (setf (inflate-state-distance state) value)
                  (transition-to distance-extra)))
 
