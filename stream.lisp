@@ -56,13 +56,11 @@
      #+clisp 'gray:stream-read-byte-sequence
      #+ecl 'gray:stream-read-sequence
      #+clasp 'gray:stream-read-sequence
-     ;; cl-amiga's Gray streams expose no STREAM-READ-SEQUENCE generic; its
-     ;; READ-SEQUENCE drives the per-byte STREAM-READ-BYTE method instead, so
-     ;; no bulk method is defined (cl-amiga is absent from the DEFMETHOD
-     ;; branches of DEFINE-STREAM-READ-SEQUENCE below).  NIL keeps the
-     ;; read-time #.*STREAM-READ-SEQUENCE-FUNCTION* in that macro's body well
-     ;; defined even though the body is discarded for this implementation.
-     #+cl-amiga nil
+     ;; cl-amiga's Gray streams expose STREAM-READ-SEQUENCE with the
+     ;; trivial-gray-streams lambda list (stream sequence start end &key);
+     ;; CL:READ-SEQUENCE dispatches to it for Gray streams, so DEFINE-STREAM-
+     ;; READ-SEQUENCE below installs a real bulk decompress method.
+     #+cl-amiga 'gray:stream-read-sequence
      #+genera 'gray-streams:stream-read-sequence)
 ) ; EVAL-WHEN
 
@@ -83,6 +81,12 @@
 
     #+(or lispworks openmcl)
     `(defmethod #.*stream-read-sequence-function* ((stream ,specializer) seq start end)
+       ,definition)
+
+    ;; cl-amiga's GRAY:STREAM-READ-SEQUENCE has the trivial-gray-streams
+    ;; lambda list: (stream sequence start end &key).
+    #+cl-amiga
+    `(defmethod #.*stream-read-sequence-function* ((stream ,specializer) seq start end &key)
        ,definition)
 
     #+clisp
