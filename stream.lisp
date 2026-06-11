@@ -32,6 +32,7 @@
      #+clisp 'gray:fundamental-binary-input-stream
      #+ecl 'gray:fundamental-binary-input-stream
      #+clasp 'gray:fundamental-binary-input-stream
+     #+cl-amiga 'gray:fundamental-binary-input-stream
      #+genera 'gray-streams:fundamental-binary-input-stream)
 
   (defvar *stream-read-byte-function*
@@ -43,6 +44,7 @@
      #+clisp 'gray:stream-read-byte
      #+ecl 'gray:stream-read-byte
      #+clasp 'gray:stream-read-byte
+     #+cl-amiga 'gray:stream-read-byte
      #+genera 'gray-streams:stream-read-byte)
 
   (defvar *stream-read-sequence-function*
@@ -54,6 +56,13 @@
      #+clisp 'gray:stream-read-byte-sequence
      #+ecl 'gray:stream-read-sequence
      #+clasp 'gray:stream-read-sequence
+     ;; cl-amiga's Gray streams expose no STREAM-READ-SEQUENCE generic; its
+     ;; READ-SEQUENCE drives the per-byte STREAM-READ-BYTE method instead, so
+     ;; no bulk method is defined (cl-amiga is absent from the DEFMETHOD
+     ;; branches of DEFINE-STREAM-READ-SEQUENCE below).  NIL keeps the
+     ;; read-time #.*STREAM-READ-SEQUENCE-FUNCTION* in that macro's body well
+     ;; defined even though the body is discarded for this implementation.
+     #+cl-amiga nil
      #+genera 'gray-streams:stream-read-sequence)
 ) ; EVAL-WHEN
 
