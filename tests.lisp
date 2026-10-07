@@ -207,7 +207,10 @@
                              (dolist (x args)
                                (princ x stream)(princ " " stream)))
                            " >" (namestring output-file)))
-  #-(or lispworks sbcl openmcl cmu clisp ecl clasp)
+  #+dotcl
+  (uiop:run-program
+    (cons executable args) :output output-file :if-output-exists :supersede)
+  #-(or lispworks sbcl openmcl cmu clisp ecl clasp dotcl)
   (error "run-external is not supported for this lisp implementation"))
 
 (defun compress-test-files (&optional (test-files-dir *default-test-files-dir*))

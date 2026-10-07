@@ -16,6 +16,10 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require :gray-streams))
 
+#+dotcl
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require "dotcl-gray"))
+
 ;;; TRIVIAL-GRAY-STREAMS has it, we might as well, too...
 #+allegro
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -33,6 +37,7 @@
      #+ecl 'gray:fundamental-binary-input-stream
      #+clasp 'gray:fundamental-binary-input-stream
      #+cl-amiga 'gray:fundamental-binary-input-stream
+     #+dotcl 'dotcl-gray:fundamental-binary-input-stream
      #+genera 'gray-streams:fundamental-binary-input-stream)
 
   (defvar *stream-read-byte-function*
@@ -45,6 +50,7 @@
      #+ecl 'gray:stream-read-byte
      #+clasp 'gray:stream-read-byte
      #+cl-amiga 'gray:stream-read-byte
+     #+dotcl 'dotcl-gray:stream-read-byte
      #+genera 'gray-streams:stream-read-byte)
 
   (defvar *stream-read-sequence-function*
@@ -61,6 +67,7 @@
      ;; CL:READ-SEQUENCE dispatches to it for Gray streams, so DEFINE-STREAM-
      ;; READ-SEQUENCE below installs a real bulk decompress method.
      #+cl-amiga 'gray:stream-read-sequence
+     #+dotcl 'dotcl-gray:stream-read-sequence
      #+genera 'gray-streams:stream-read-sequence)
 ) ; EVAL-WHEN
 
@@ -75,7 +82,7 @@
                 (let ((end (or end (length seq))))
                   ,@body)))))
 
-    #+(or cmu sbcl allegro ecl clasp genera)
+    #+(or cmu sbcl allegro ecl clasp genera dotcl)
     `(defmethod #.*stream-read-sequence-function* ((stream ,specializer) seq &optional (start 0) end)
        ,definition)
 
